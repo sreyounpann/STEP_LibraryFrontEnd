@@ -4,27 +4,56 @@ import { Navbar, Nav, Button, Table, Modal, FormControl } from 'react-bootstrap'
 import { Link } from 'react-router-dom';
 import { NavLink } from "react-router-dom";
 import { CodeIcon, HamburgetMenuClose, HamburgetMenuOpen } from "../Icons";
+import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 const ManageGroupComponent = () => {
-  const loginedData = JSON.parse(localStorage.getItem('user_logined'));
-  const userId = loginedData
-  console.log(userId)
   const [show, setShow] = useState(false);
   const [teacherGroups, setTeacherGroups] = useState([
     { id: 1, name: 'FT-SD-A3', numberOfStudents: 25 },
     // Add more default groups as needed
   ]); // Placeholder data for teacher's groups
+  const [books, setBooks] = useState([]);
 
   const [filterValue, setFilterValue] = useState('');
   // Function to handle modal close
   const handleClose = () => setShow(false);
+  const handleOpen = () => setShow(true);
+
 
   const [click, setClick] = useState(false);
-
   const handleClick = () => setClick(!click);
+
+  const [bookList, setListBook] = useState([]);
+
+  function handleOpenModal(group){
+    handleOpen(true);
+    setListBook(books.filter(book => book.groupId === group.id));
+    // console.log(books.groupId, 'group id in book');
+    // console.log(group.id, "gorup in group")
+    // console.log(books)
+  }
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, sign out!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Cookies.remove("roleToken");
+        navigate("/");
+      }
+    });
+  }
 
   useEffect(() => {
     loadAllGroups();
+    loadBooks();
     // console.log(groupData[0].users[0].userId, 'group data')
   }, []);
 
@@ -41,10 +70,28 @@ const ManageGroupComponent = () => {
 
             },
         }).then((resp) => resp.json()).then((data) => {
-            console.log(data);
+            // console.log(data);
             setGroupData(data);
         })
     }catch{
+
+    }
+  }
+
+  async function loadBooks(){
+    const userToken = localStorage.getItem('userToken');
+    try{
+      fetch(`https://localhost:7287/api/Books`, {
+        method: 'GET',
+        headers:{
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${userToken}`,
+        },
+      }).then(resp => resp.json()).then((data) => {
+        console.log(data, 'Data of Get Booooks');
+        setBooks(data);
+      })
+    }catch(e){
 
     }
   }
@@ -311,7 +358,7 @@ const ManageGroupComponent = () => {
                 to="/LoginLibrarian"
                 activeclassName="active"
                 className="nav-links"
-                onClick={handleClick}
+                onClick={handleLogout}
 
               >
                 Log out
@@ -388,7 +435,7 @@ const ManageGroupComponent = () => {
                         <td>{group.name}</td>
                         <td>
                           {/* Replaced "View" link with a button */}
-                          <Button variant="info" className="me-2">
+                          <Button variant="info" className="me-2" onClick={ () => handleOpenModal(group)}>
                             View
                           </Button>
                           {/* Link to the editGroup page with the corresponding group id */}
@@ -401,38 +448,54 @@ const ManageGroupComponent = () => {
             </div>
           </div>
 
+
           {/* Modal Box */}
-          <div className="model_box">
-            <Modal
+          <div style={{width: '1500px'}}>
+          <Modal
               show={show}
               onHide={handleClose}
               backdrop="static"
               keyboard={false}
-              style={{ marginTop: '90px', fontFamily: 'Allerta Stencil', width: '100%', height: '100%' }}
+              size="xl" // Setting the size to 'xl' for extra large
+              style={{ marginTop: '90px', fontFamily: 'Allerta Stencil', height: '100%' }}
             >
               <Modal.Header closeButton style={{ background: '#33b5e5' }}>
-                <Modal.Title>Add Group</Modal.Title>
+                <Modal.Title>List Of Book</Modal.Title>
               </Modal.Header>
               <Modal.Body style={{ background: '#e3f2fd' }}>
-                {/* Form for adding a new group */}
-                <form>
-                  <div className="form-group">
-                    <label htmlFor="groupName">Group Name:</label>
-                    <input type="text" className="form-control" id="groupName" placeholder="Enter Group Name" />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="numberOfStudents">Number of Students:</label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      id="numberOfStudents"
-                      placeholder="Enter Number of Students"
-                    />
-                  </div>
-                  <button type="submit" className="btn btn-success mt-4">
-                    Add Group
-                  </button>
-                </form>
+                <div className="row">
+            <div className="table-responsive" style={{ fontFamily: 'Allerta Stencil', maxHeight: '400px', maxWidth: '12000px'}}>
+              <Table striped bordered hover responsive className="mt-4 text-center" style={{ width: '1000px' }}>
+              <thead>
+                  <tr>
+                    <th>NO.</th>
+                    <th width="100">Book ID</th>
+                    <th width="120">Book Title</th>
+                    <th>Book Cover</th>
+                    <th>Book Pages</th>
+                    <th width="400">Book Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Map over the API data to render rows */}
+                  {bookList.map((book, index) => (
+                    <tr key={index}>
+                      <td>{index + 1}</td>
+                      <td>{book.id}</td>
+                      <td>{book.title}</td>
+                      <td>
+                        <img src={`https://localhost:7287/images/bookcovers/${book.imagePath}`} className="avatar sm me-3 flex-shrink-0"
+                          style={{ width: "30px", height: "30px" }}
+                        ></img>
+                      </td>
+                      <td>{book.pages}</td>
+                      <td>{book.description}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          </div>
               </Modal.Body>
               <Modal.Footer>
                 <Button variant="secondary" onClick={handleClose}>

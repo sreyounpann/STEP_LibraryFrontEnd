@@ -5,6 +5,9 @@ import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { NavLink } from "react-router-dom";
 import { CodeIcon, HamburgetMenuClose, HamburgetMenuOpen } from "../Icons";
+import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 const EbookManageComponent = ({ groupId }) => {
 
@@ -42,7 +45,22 @@ const EbookManageComponent = ({ groupId }) => {
     loadBooks();
     // console.log(groupData[0].users[0].userId, 'group data')
   }, []);
-
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, sign out!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Cookies.remove("roleToken");
+        navigate("/");
+      }
+    });
+  }
 
   async function loadBooks(){
     const userToken = localStorage.getItem('userToken');
@@ -81,6 +99,9 @@ const EbookManageComponent = ({ groupId }) => {
 
     }
   }
+
+  //Assign Book to Group
+
   const [click, setClick] = useState(false);
 
   const handleClick = () => setClick(!click);
@@ -348,7 +369,7 @@ const EbookManageComponent = ({ groupId }) => {
                 to="/LoginLibrarian"
                 activeclassName="active"
                 className="nav-links"
-                onClick={handleClick}
+                onClick={handleLogout}
 
               >
                 Log out
@@ -388,7 +409,6 @@ const EbookManageComponent = ({ groupId }) => {
                   <tr>
                     <th>Ebook ID</th>
                     <th>Title</th>
-                    <th>Author</th>
                     <th>Group</th>
                     <th>Action</th>
                   </tr>
@@ -413,7 +433,6 @@ const EbookManageComponent = ({ groupId }) => {
                           {/* Add other book titles as needed */}
                         </select>
                       </td>
-                      <td>{ebook.author}</td>
                       <td>
                         {/* Display the group as a dropdown */}
                         <select
@@ -439,10 +458,6 @@ const EbookManageComponent = ({ groupId }) => {
                         </Button>
 
                         {/* Button for removing ebook */}
-                        <Button variant="danger">
-                          Delete
-                        </Button>
-
                       </td>
                     </tr>
                   ))}

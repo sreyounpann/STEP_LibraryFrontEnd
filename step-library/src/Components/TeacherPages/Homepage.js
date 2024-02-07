@@ -15,9 +15,6 @@ const HomepageComponent = () => {
 
   const handleClick = () => setClick(!click);
   const navigate = useNavigate();
-
-
-    
     const handleLogout = () => {
       Swal.fire({
         title: "Are you sure?",
@@ -29,7 +26,7 @@ const HomepageComponent = () => {
       }).then((result) => {
         if (result.isConfirmed) {
           Cookies.remove("roleToken");
-          navigate("/LoginLibrarian");
+          navigate("/");
         }
       });
     }
